@@ -1,0 +1,56 @@
+version: "3.9"
+
+networks:
+  whmcs:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/16
+
+services:
+  mysql:
+    image: mysql/mysql-server:5.7
+    networks:
+      whmcs:
+        ipv4_address: 172.19.0.10 
+    deploy:
+        restart_policy:
+          condition: on-failure
+          delay: 5s
+          max_attempts: 3
+          window: 120s
+    volumes:
+      - /data/whmcs/data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "ascertain resolved silly underling flatly"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "whmcs"
+    ports:
+      - 3306:3306
+
+  whmcs:
+    image: puzed/whmcs:latest
+    networks:
+      whmcs:
+        ipv4_address: 172.19.0.11
+    deploy:
+      restart_policy:    
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    depends_on:
+      - mysql
+    environment:
+      WORKER_PROCESSES: 4
+    ports:
+      - 80:80
+      - 2222:2222
+    volumes:
+      - /data/whmcs/whmcs:/var/www/html
+      - /data/whmcs/data/downloads:/data/downloads
+      - /data/whmcs/data/attachments:/data/attachments
+      - /data/whmcs/data/projects:/data/projects
+      - /data/whmcs/data/templates_c:/data/templates_c
+      - /data/whmcs/data/crons:/data/crons
+
